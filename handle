@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# handle <video_link> — 一条命令：视频链接 → output/<短标题>/report.html
+#
+#   ./handle "https://www.youtube.com/watch?v=..."
+#   ./handle "https://www.bilibili.com/video/BV..."          # 无字幕会自动 Whisper 转写
+#   ./handle --demo                                          # 离线渲染示例报告
+#
+# 其余参数透传给 v2d/cli.py（--asr-model / --force-asr / --cookies-from-browser ...）
+set -euo pipefail
+cd "$(dirname "$0")"
+if [[ ! -x .venv/bin/python ]]; then
+  echo "缺少虚拟环境。先执行：" >&2
+  echo "  python -m venv .venv && .venv/bin/pip install -r requirements.txt" >&2
+  exit 1
+fi
+exec .venv/bin/python -m v2d.cli "$@"
