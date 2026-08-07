@@ -105,3 +105,4 @@ python3 skills/video-debrief/scripts/render_report.py data.json report.html
 - 下载依赖 `yt-dlp`，受平台风控影响；B 站部分视频需要 `--cookies-from-browser`
 - Whisper 在 CPU 上跑 `small` 模型大约是视频时长的 0.5~1 倍时间
 - 摘要/翻译走 Claude API，会产生 token 消耗（长视频按 ~9000 字符分片）
+# video-debrief
