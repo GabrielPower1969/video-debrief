@@ -61,8 +61,8 @@ def run(url: str, *, output_root: str = "output", asr_model: str = "small",
     if workdir.exists():
         shutil.rmtree(workdir)
     meta = media.download(url, workdir, cookies_from_browser=cookies_from_browser,
-                          cookies_file=cookies_file)
-    print(f"[v2d] 标题: {meta['title']}")
+                          cookies_file=cookies_file, progress=print)
+    print(f"[v2d] 标题: {meta['title']}（{fmt_mmss(meta['duration'])}）")
 
     # 2) 拿转写行：原生字幕优先，否则 Whisper
     lang = meta["language"]
@@ -79,6 +79,12 @@ def run(url: str, *, output_root: str = "output", asr_model: str = "small",
         print(f"[v2d] 转写完成: {len(lines)} 行，语言={lang}")
     if not lines:
         raise SystemExit("没有得到任何转写内容，无法继续。")
+
+    # 覆盖率兜底：转写最后一句离视频结尾太远，说明字幕/转写只覆盖了开头
+    dur = float(meta["duration"] or 0)
+    if dur and lines[-1].end < dur * 0.9:
+        print(f"[v2d] ⚠ 转写只覆盖到 {fmt_mmss(lines[-1].end)} / 全片 {fmt_mmss(dur)}"
+              f"（{lines[-1].end / dur:.0%}）——摘要会不完整，建议加 --force-asr 重跑。")
 
     sample = " ".join(l.text for l in lines[:80])
     is_zh = (lang or "").startswith("zh") or is_chinese(sample)
