@@ -16,7 +16,8 @@
 3. **分片消化再全局汇总**：~9000 字符一片，每片划章节 / 摘原话 / 写纪要，
    再把纪要汇总成概述、主题、核心观点、金句。长稿一次性喂进去会丢中段。
 4. **组装 `REPORT_DATA`**，字段见
-   `skills/video-debrief/references/data-contract.md`。
+   `skills/video-debrief/references/data-contract.md`。概述 / 观点 / 章节纪要里
+   用 `==这句话==` 把重点标黄；**引文和转写不标**，它们必须逐字。
 5. **渲染**：
    ```bash
    python3 skills/video-debrief/scripts/render_report.py data.json report.html
