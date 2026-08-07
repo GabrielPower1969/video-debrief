@@ -1,395 +1,590 @@
-<!doctype html>
+<!DOCTYPE html>
+<!--
+  video-analysis-report · 单文件视频分析报告模板
+
+  用法：把 REPORT_DATA 注入下方 /*__REPORT_DATA__*/null 占位符即可（见 SKILL.md）。
+  页面全部由底部脚本用 textContent 渲染，无外部 CSS/JS/字体/图片依赖，可离线打开。
+
+  视觉语言取自 GabrielPower1969/InterviewAnalysis 的 interview-analysis skill（MIT），
+  按视频分析的内容模型重做：深色面板 + 侧边固定目录 + 底部播放条 + 实时字幕。
+-->
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>视频分析报告</title>
 <style>
-  :root {
-    --bg: #f7f7f8;
-    --surface: #ffffff;
-    --ink: #1a1a21;
-    --ink-2: #4b4b57;
-    --muted: #8a8a96;
-    --line: #e6e6ea;
-    --accent: #4f46e5;
-    --accent-ink: #ffffff;
-    --accent-soft: #eef0fe;
-    --quote-bg: #fafafb;
+  :root{
+    --bg:#0b0e14; --panel:#141926; --panel2:#1a2131; --ink:#e9edf5; --muted:#9aa5bb;
+    --line:#232b3d; --line2:#2d3a55; --brand:#5b9dff; --brand2:#8f7ff8;
+    --good:#3ddc97; --warn:#f6b73c; --bad:#ff6b7a; --mid:#f0c14b;
+    --chip:#1b2233; --radius:16px; --maxw:1200px;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 12px 32px -16px rgba(0,0,0,.55);
+    --serif:"Georgia","Songti SC",serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #131318;
-      --surface: #1c1c24;
-      --ink: #ececf1;
-      --ink-2: #b6b6c2;
-      --muted: #7c7c8a;
-      --line: #2d2d38;
-      --accent: #8b85f4;
-      --accent-ink: #16161d;
-      --accent-soft: #26263a;
-      --quote-bg: #21212b;
-    }
-  }
-  * { box-sizing: border-box; margin: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font: 15px/1.75 -apple-system, "PingFang SC", "Hiragino Sans GB",
-          "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 20px 72px; }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;color:var(--ink);padding-bottom:84px;
+    background:
+      radial-gradient(1400px 500px at 15% -8%,rgba(91,157,255,.10),transparent 60%),
+      radial-gradient(1100px 420px at 90% -12%,rgba(143,127,248,.09),transparent 60%),
+      linear-gradient(180deg,#090c12,var(--bg) 340px);
+    background-attachment:fixed;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.72;font-size:15.5px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body.no-audio{padding-bottom:24px}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{text-decoration:underline}
+  ::selection{background:rgba(91,157,255,.30)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .layout{display:grid;grid-template-columns:248px 1fr;gap:40px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}.toc{position:static!important;max-height:none!important}}
 
-  /* ---- hero ---- */
-  .kicker { color: var(--muted); font-size: 13px; letter-spacing: .04em; }
-  h1 { font-size: 30px; line-height: 1.3; margin: 8px 0 4px; letter-spacing: -.01em; }
-  .orig-title { color: var(--ink-2); font-size: 14px; margin-bottom: 14px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 20px; }
-  .chip {
-    font-size: 12.5px; color: var(--ink-2); background: var(--surface);
-    border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px;
-  }
-  .overview { font-size: 15.5px; color: var(--ink-2); max-width: 72ch; }
-  .overview .zh-sub { display: block; margin-top: 8px; }
-  .topics { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-  .topic {
-    font-size: 12.5px; color: var(--accent); background: var(--accent-soft);
-    border-radius: 999px; padding: 3px 12px; font-weight: 500;
-  }
+  header.hero{padding:52px 0 30px;border-bottom:1px solid var(--line);margin-bottom:34px}
+  .kicker{color:var(--brand);font-weight:800;letter-spacing:.22em;text-transform:uppercase;font-size:11.5px}
+  h1{font-size:clamp(26px,3.6vw,34px);margin:10px 0 6px;line-height:1.18;font-weight:800;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:15px}
+  .meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+  .pill{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:12.5px;color:var(--muted)}
+  .pill b{color:var(--ink);font-weight:650}
 
-  /* ---- stat tiles（数字用正文墨色，不上彩） ---- */
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-           gap: 12px; margin: 28px 0 8px; }
-  .stat { background: var(--surface); border: 1px solid var(--line);
-          border-radius: 14px; padding: 14px 18px; }
-  .stat .label { font-size: 12px; color: var(--muted); letter-spacing: .05em; }
-  .stat .value { font-size: 26px; font-weight: 650; letter-spacing: -.01em;
-                 font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .toc{position:sticky;top:18px;background:linear-gradient(180deg,var(--panel),#121722);border:1px solid var(--line);border-radius:var(--radius);padding:16px 12px;max-height:calc(100vh - 36px);overflow:auto;box-shadow:var(--shadow)}
+  .toc::-webkit-scrollbar{width:4px}
+  .toc::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+  .toc .tt{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:4px 12px 10px}
+  .toc a{display:flex;gap:10px;align-items:baseline;color:var(--muted);padding:7px 12px;border-radius:10px;font-size:13.5px;transition:.16s;border-left:2px solid transparent}
+  .toc a:hover{background:var(--panel2);color:var(--ink);text-decoration:none}
+  .toc a.active{background:linear-gradient(90deg,rgba(91,157,255,.14),rgba(91,157,255,.03));color:var(--ink);border-left-color:var(--brand)}
+  .toc a .n{color:var(--brand);font-variant-numeric:tabular-nums;font-size:11.5px;min-width:17px;font-weight:700;opacity:.85}
+  .toc a .score{font-variant-numeric:tabular-nums;margin-left:auto;font-size:12px;color:var(--muted);font-weight:600}
 
-  /* ---- sticky player ---- */
-  .player { position: sticky; top: 10px; z-index: 50; margin: 22px 0 6px;
-            background: var(--surface); border: 1px solid var(--line);
-            border-radius: 16px; padding: 12px 16px 10px;
-            box-shadow: 0 6px 24px rgba(0,0,0,.08); }
-  .player audio { width: 100%; height: 38px; display: block; }
-  .player .now { font-size: 12.5px; color: var(--muted); margin-top: 6px;
-                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .player .now b { color: var(--accent); font-weight: 600; }
-  .player.hidden { display: none; }
+  section{margin:0 0 52px;scroll-margin-top:24px}
+  h2{font-size:22px;margin:0 0 6px;display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:-.01em}
+  h2 .idx{color:var(--brand);font-size:12.5px;font-weight:800;border:1px solid var(--line2);border-radius:9px;padding:3px 9px;background:linear-gradient(180deg,var(--panel2),var(--panel));font-variant-numeric:tabular-nums;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+  .lead{color:var(--muted);margin:0 0 20px;font-size:14.5px;max-width:72ch}
+  h3{font-size:16px;margin:0 0 10px;font-weight:750}
 
-  /* ---- sections ---- */
-  section { margin-top: 44px; }
-  h2 { font-size: 20px; letter-spacing: -.01em; display: flex; align-items: baseline; gap: 10px; }
-  h2 .count { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .card{background:linear-gradient(180deg,var(--panel),#121722);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin:16px 0;box-shadow:var(--shadow)}
+  .callout{background:linear-gradient(120deg,rgba(143,127,248,.13),rgba(91,157,255,.07));border:1px solid rgba(143,127,248,.32);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow)}
 
-  /* ---- 播放按钮 / 时间胶囊 ---- */
-  .tchip {
-    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
-    font: 600 12.5px/1 ui-monospace, "SF Mono", Menlo, monospace;
-    color: var(--accent); background: var(--accent-soft);
-    border: none; border-radius: 999px; padding: 6px 12px;
-    transition: transform .06s ease;
-    font-variant-numeric: tabular-nums;
-  }
-  .tchip:hover { transform: scale(1.05); }
-  .tchip:active { transform: scale(.97); }
-  .tchip .tri { font-size: 10px; }
-  body.no-audio .tchip { cursor: default; color: var(--muted); background: var(--quote-bg); }
-  body.no-audio .tchip:hover { transform: none; }
+  /* 原文/译文：非中文原文用衬线斜体，中文译文跟在下面 */
+  .en{font-style:italic;color:#e0e6f2;font-family:var(--serif);letter-spacing:.005em}
+  .zh{color:var(--muted);font-size:.94em;margin-top:3px}
 
-  /* ---- 核心观点 ---- */
-  .vp { background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
-        padding: 20px 22px; margin-top: 14px; }
-  .vp-head { display: flex; gap: 12px; align-items: flex-start; }
-  .vp-num { flex: none; width: 26px; height: 26px; border-radius: 8px;
-            background: var(--accent); color: var(--accent-ink);
-            font: 700 13px/26px sans-serif; text-align: center; margin-top: 2px; }
-  .vp-title { font-size: 16.5px; font-weight: 650; }
-  .vp-title .zh-sub { display: block; font-size: 14px; font-weight: 500; color: var(--ink-2); }
-  .vp-detail { color: var(--ink-2); margin: 10px 0 12px; }
-  .vp-detail .zh-sub { display: block; margin-top: 6px; }
-  .quote-box { background: var(--quote-bg); border-left: 3px solid var(--accent);
-               border-radius: 0 10px 10px 0; padding: 10px 14px;
-               display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
-  .quote-box .q { font-size: 14px; color: var(--ink-2); font-style: italic; }
-  .quote-box .q .zh-sub { display: block; font-style: normal; margin-top: 4px; color: var(--muted); }
-  .quote-box .tchip { flex: none; margin-top: 2px; }
+  .topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .topic{font-size:12px;padding:4px 12px;border-radius:999px;color:var(--brand2);
+    border:1px solid rgba(143,127,248,.35);background:rgba(143,127,248,.10);font-weight:650}
 
-  /* ---- 章节时间轴 ---- */
-  .timeline { margin-top: 18px; padding-left: 18px; border-left: 2px solid var(--line); }
-  .ch { position: relative; padding: 2px 0 26px 18px; }
-  .ch::before { content: ""; position: absolute; left: -24px; top: 10px;
-                width: 10px; height: 10px; border-radius: 50%;
-                background: var(--accent); border: 2px solid var(--bg); }
-  .ch-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-  .ch-title { font-size: 15.5px; font-weight: 650; }
-  .ch-title .zh-sub { font-weight: 500; color: var(--ink-2); margin-left: 8px; }
-  .ch-range { font: 500 12px/1 ui-monospace, monospace; color: var(--muted); }
-  .ch-sum { color: var(--ink-2); margin-top: 6px; max-width: 68ch; }
-  .ch-sum .zh-sub { display: block; margin-top: 4px; }
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:linear-gradient(180deg,var(--panel),#121722);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+  .stat .num{font-size:29px;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat .cap{color:var(--muted);font-size:12px;margin-top:3px}
 
-  /* ---- 金句 ---- */
-  .quotes { display: grid; gap: 12px; margin-top: 16px; }
-  .gq { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-        padding: 16px 20px; }
-  .gq .mark { color: var(--accent); font-size: 22px; font-family: Georgia, serif; line-height: 1; }
-  .gq .q { font-size: 15px; margin: 4px 0 10px; }
-  .gq .q .zh-sub { display: block; font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+  /* 核心观点 */
+  .vp{margin-top:16px}
+  .vphead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .vphead .n{color:var(--brand);font-size:12.5px;font-weight:800;border:1px solid var(--line2);border-radius:9px;
+    padding:2px 9px;background:linear-gradient(180deg,var(--panel2),var(--panel));font-variant-numeric:tabular-nums}
+  .vphead .t{font-size:16.5px;font-weight:750;flex:1;min-width:200px}
+  .vpbody{margin:10px 0 0;font-size:14.5px}
+  .quote{border-left:3px solid var(--brand);background:var(--panel2);padding:10px 15px;border-radius:0 10px 10px 0;margin:14px 0 0;font-size:13.5px;color:#cbd3e2}
+  .quote .qhead{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 
-  /* ---- 转写 ---- */
-  .tr-controls { display: flex; align-items: center; gap: 14px; margin: 14px 0 10px;
-                 font-size: 13px; color: var(--muted); }
-  .tr-controls label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-  .transcript { background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
-                max-height: 500px; overflow-y: auto; padding: 6px 0; }
-  .row { display: flex; gap: 14px; padding: 8px 18px; border-left: 3px solid transparent; }
-  .row.active { background: var(--accent-soft); border-left-color: var(--accent); }
-  .row .t { flex: none; font: 500 12px/1.9 ui-monospace, monospace; color: var(--muted);
-            cursor: pointer; font-variant-numeric: tabular-nums; }
-  .row .t:hover { color: var(--accent); }
-  body.no-audio .row .t { cursor: default; }
-  body.no-audio .row .t:hover { color: var(--muted); }
-  .row .tx { flex: 1; }
-  .row .tx .zh-sub { display: block; font-size: 13px; color: var(--muted); }
+  /* 章节时间轴 */
+  .tl{position:relative;margin:10px 0 0;padding-left:22px}
+  .tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--line2),var(--line))}
+  .ev{position:relative;padding:9px 0 9px 16px}
+  .ev::before{content:"";position:absolute;left:-21px;top:17px;width:11px;height:11px;border-radius:50%;background:var(--brand);border:2.5px solid var(--bg);box-shadow:0 0 0 2px rgba(91,157,255,.25)}
+  .ev .h{font-weight:650;margin:1px 0 2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ev .d{color:var(--muted);font-size:13px}
+  .ev .rng{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
 
-  footer { margin-top: 56px; color: var(--muted); font-size: 12.5px;
-           border-top: 1px solid var(--line); padding-top: 16px; }
-  footer a { color: var(--muted); }
+  /* 逐段精读 */
+  .seg{display:grid;grid-template-columns:118px 1fr;gap:18px;padding:20px 2px;border-top:1px solid var(--line)}
+  .seg:first-child{border-top:0}
+  .seg-t{font-variant-numeric:tabular-nums;align-self:start;position:sticky;top:16px;line-height:1.9}
+  .seg-t .rng{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+  .seg-topic{font-weight:750;font-size:15.5px;margin-bottom:10px}
+  .seg-row{font-size:13.5px;margin:7px 0;line-height:1.7}
+  .seg-row .k{font-weight:750;color:var(--muted)}
+  .seg-row.q{background:rgba(143,127,248,.08);border:1px solid rgba(143,127,248,.22);border-radius:10px;padding:8px 12px}
+  .seg-row.q .k{color:var(--brand2)}
+  @media(max-width:640px){.seg{grid-template-columns:1fr;gap:8px}.seg-t{position:static}}
 
-  @media (max-width: 560px) {
-    h1 { font-size: 24px; }
-    .quote-box { flex-direction: column; }
+  /* 金句 */
+  .gq{background:linear-gradient(180deg,var(--panel),#121722);border:1px solid var(--line);border-left:3px solid var(--brand2);border-radius:0 12px 12px 0;padding:14px 18px;margin:12px 0;box-shadow:var(--shadow)}
+  .gq .big{font-size:15.5px;line-height:1.75}
+  .gq .foot{margin-top:9px}
+
+  /* 完整转写 */
+  .tsbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 12px}
+  .tswrap{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:var(--radius);
+    background:linear-gradient(180deg,var(--panel),#121722);box-shadow:var(--shadow)}
+  .tswrap::-webkit-scrollbar{width:6px}
+  .tswrap::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px}
+  .row{display:grid;grid-template-columns:70px 1fr;gap:14px;padding:9px 18px;border-top:1px solid var(--line);transition:background .15s}
+  .row:first-child{border-top:0}
+  .row:hover{background:rgba(91,157,255,.05)}
+  .row.active{background:linear-gradient(90deg,rgba(91,157,255,.14),rgba(91,157,255,.02));box-shadow:inset 2px 0 0 var(--brand)}
+  .row .tm{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;cursor:pointer;padding-top:2px}
+  .row .tm:hover{color:var(--brand)}
+  .row .tx{font-size:14px}
+  body.no-audio .row .tm{cursor:default}
+
+  /* 播放按钮 */
+  .pb{display:inline-flex;align-items:center;gap:5px;background:rgba(91,157,255,.12);
+    border:1px solid rgba(91,157,255,.42);color:var(--brand);border-radius:999px;
+    padding:2px 10px;font-size:12px;font-weight:750;font-variant-numeric:tabular-nums;
+    cursor:pointer;transition:.15s;font-family:inherit;line-height:1.5;vertical-align:baseline}
+  .pb::before{content:"\25B6";font-size:8.5px;transform:translateY(-.5px)}
+  .pb:hover{background:rgba(91,157,255,.28);transform:translateY(-1px)}
+  .pb.playing{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .pb.playing::before{content:"\25AE\25AE";letter-spacing:-2px;font-size:8px}
+  .seg-t .pb{font-size:12.5px;padding:4px 11px}
+  body.no-audio .pb{cursor:default;opacity:.75}
+  body.no-audio .pb::before{content:"";margin:0}
+  body.no-audio .pb:hover{background:rgba(91,157,255,.12);transform:none}
+
+  /* 底部播放条 + 实时字幕 */
+  #playerbar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(11,14,20,.92);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line2);padding:10px 22px;display:flex;align-items:center;gap:16px;
+    box-shadow:0 -8px 24px -12px rgba(0,0,0,.6)}
+  #playerbar .pt{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+  #playerbar .pt b{color:var(--ink);font-weight:650}
+  #playerbar audio{flex:1;height:38px;min-width:200px}
+  @media(max-width:640px){#playerbar .pt{display:none}}
+  .ccbtn{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line2);
+    color:var(--muted);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:750;cursor:pointer;
+    font-family:inherit;white-space:nowrap;transition:.15s}
+  .ccbtn:hover{color:var(--ink);border-color:var(--brand)}
+  .ccbtn[aria-pressed="true"]{background:rgba(91,157,255,.16);border-color:rgba(91,157,255,.5);color:var(--brand)}
+  .ccbtn .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45}
+  .ccbtn[aria-pressed="true"] .dot{opacity:1;box-shadow:0 0 6px currentColor}
+  #capbar{position:fixed;left:0;right:0;bottom:66px;z-index:59;display:none;justify-content:center;padding:0 22px;pointer-events:none}
+  #capbar.on{display:flex}
+  #cap{background:rgba(13,17,25,.95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--line2);border-left:3px solid var(--brand);border-radius:12px;
+    padding:9px 18px;max-width:880px;font-size:15px;line-height:1.62;text-align:center;color:#eef2fa;
+    box-shadow:0 -4px 22px -10px rgba(0,0,0,.7);transition:opacity .12s}
+  #cap:empty{opacity:0}
+  #cap .cts{color:var(--brand);font-size:11.5px;font-variant-numeric:tabular-nums;font-weight:750;margin-right:9px;opacity:.8}
+  #cap .zh{text-align:center;margin-top:2px}
+  @media(max-width:640px){#cap{font-size:13.5px;padding:8px 13px}}
+
+  footer{border-top:1px solid var(--line);margin-top:36px;padding:24px 0 40px;color:var(--muted);font-size:12.5px;line-height:1.8}
+
+  @media print{
+    body{background:#fff;color:#111;padding-bottom:0}
+    .toc,#playerbar,#capbar,.pb{display:none}
+    .layout{grid-template-columns:1fr}
+    .card,.stat,.gq,.callout,.tswrap{box-shadow:none;border-color:#ddd;background:#fff}
+    .tswrap{max-height:none;overflow:visible}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="kicker" id="kicker"></div>
-    <h1 id="title"></h1>
-    <div class="orig-title" id="origTitle"></div>
-    <div class="chips" id="chips"></div>
-    <p class="overview" id="overview"></p>
-    <div class="topics" id="topics"></div>
-  </header>
 
-  <div class="stats" id="stats"></div>
+<header class="hero"><div class="wrap">
+  <div class="kicker">视频分析报告 · Video Analysis</div>
+  <h1 id="h-title"></h1>
+  <div class="sub" id="h-sub"></div>
+  <div class="meta" id="h-meta"></div>
+</div></header>
 
-  <div class="player" id="player">
-    <audio id="audio" controls preload="metadata"></audio>
-    <div class="now" id="now">点击任意 ▶ 时间戳，跳转到对应片段播放</div>
-  </div>
+<div class="wrap"><div class="layout">
+  <nav class="toc"><div class="tt">目录 · Index</div><div id="toc"></div></nav>
+  <main id="main"></main>
+</div></div>
 
-  <section id="sec-viewpoints">
-    <h2>核心观点 <span class="count" id="vpCount"></span></h2>
-    <div id="viewpoints"></div>
-  </section>
+<div class="wrap"><footer id="foot"></footer></div>
 
-  <section id="sec-chapters">
-    <h2>章节时间轴 <span class="count" id="chCount"></span></h2>
-    <div class="timeline" id="chapters"></div>
-  </section>
-
-  <section id="sec-quotes">
-    <h2>金句</h2>
-    <div class="quotes" id="quotes"></div>
-  </section>
-
-  <section id="sec-transcript">
-    <h2>完整转写 <span class="count" id="trCount"></span></h2>
-    <div class="tr-controls">
-      <label><input type="checkbox" id="follow" checked> 跟随播放自动滚动</label>
-    </div>
-    <div class="transcript" id="transcript"></div>
-  </section>
-
-  <footer id="footer"></footer>
+<div id="capbar" class="on"><div id="cap"></div></div>
+<div id="playerbar">
+  <span class="pt">🎧 <b id="pt-name"></b></span>
+  <button id="cc" class="ccbtn" aria-pressed="true"><span class="dot"></span><span class="lbl">字幕 开</span></button>
+  <audio id="au" controls preload="metadata"></audio>
 </div>
 
 <script>
 window.REPORT_DATA = /*__REPORT_DATA__*/null;
 </script>
 <script>
-(function () {
-  const D = window.REPORT_DATA;
-  if (!D) { document.body.textContent = "REPORT_DATA 未注入"; return; }
+(function(){
+  var D = window.REPORT_DATA || {};
+  var M = D.meta || {};
+  var hasAudio = !!D.audio;
+  if(!hasAudio) document.body.classList.add('no-audio');
+  var isZh = (M.lang || 'zh').slice(0,2) === 'zh';
 
-  // ---------- 小工具 ----------
-  const $ = (id) => document.getElementById(id);
-  function el(tag, cls, text) {
-    const n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text != null) n.textContent = text;   // textContent：天然防注入
+  /* ---------- 基础工具 ---------- */
+  function el(tag, cls, text){
+    var n = document.createElement(tag);
+    if(cls) n.className = cls;
+    if(text != null) n.textContent = text;
     return n;
   }
-  function mmss(t) {
-    t = Math.max(0, Math.floor(t));
-    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
-    const p = (n) => String(n).padStart(2, "0");
-    return h ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
+  function mmss(s){
+    s = Math.max(0, Math.floor(s || 0));
+    var h = Math.floor(s/3600), m = Math.floor(s/60)%60, x = s%60;
+    var p = function(v){ return (v<10?'0':'') + v; };
+    return h ? h + ':' + p(m) + ':' + p(x) : p(m) + ':' + p(x);
   }
-  // BiText → 主行 + 副行（原文非中文：原文为主、中文为副；原文中文：只有主行）
-  function biInto(parent, bi) {
-    if (!bi) return;
-    if (bi.en) {
-      parent.appendChild(document.createTextNode(bi.en));
-      if (bi.zh) parent.appendChild(el("span", "zh-sub", bi.zh));
-    } else {
-      parent.appendChild(document.createTextNode(bi.zh || ""));
+  /* BiText：原文为主，中文译文跟在下面；原文本就是中文则只有一行 */
+  function biInto(node, b, cls){
+    if(!b) return node;
+    if(b.en){
+      node.appendChild(el('div', cls || 'en', b.en));
+      if(b.zh) node.appendChild(el('div', 'zh', b.zh));
+    } else if(b.zh){
+      node.appendChild(el('div', null, b.zh));
     }
+    return node;
   }
-
-  // ---------- 播放器 ----------
-  const audio = $("audio");
-  const hasAudio = !!D.audio;
-  if (hasAudio) { audio.src = D.audio; } else {
-    $("player").classList.add("hidden");
-    document.body.classList.add("no-audio");
-  }
-  function seek(t) {
-    if (!hasAudio) return;
-    audio.currentTime = t;
-    audio.play();
-  }
-  function tchip(t) {
-    const b = el("button", "tchip");
-    b.appendChild(el("span", "tri", "▶"));
-    b.appendChild(document.createTextNode(mmss(t)));
-    b.dataset.t = t;
-    b.addEventListener("click", () => seek(t));
+  function pb(t){
+    var b = el('button', 'pb', mmss(t));
+    b.setAttribute('data-t', t);
+    if(!hasAudio) b.setAttribute('disabled', 'disabled');
     return b;
   }
 
-  // ---------- hero ----------
-  const M = D.meta || {};
-  $("kicker").textContent = [M.platform, M.uploader, M.upload_date].filter(Boolean).join(" · ");
-  $("title").textContent = M.short_title || M.title || "视频分析报告";
-  $("origTitle").textContent = (M.short_title && M.title && M.short_title !== M.title) ? M.title : "";
-  document.title = (M.short_title || M.title || "视频分析报告") + " · 视频分析报告";
-
-  const chips = $("chips");
-  const langLabel = M.lang === "zh" ? "中文" : (M.lang ? `${M.lang} · 中英双语` : "");
-  [M.duration ? `时长 ${mmss(M.duration)}` : "", langLabel,
-   M.source_label || ""].filter(Boolean).forEach((c) => chips.appendChild(el("span", "chip", c)));
-
-  biInto($("overview"), D.overview);
-  (D.topics || []).forEach((t) => $("topics").appendChild(el("span", "topic", "# " + t)));
-
-  // ---------- stat tiles ----------
-  (D.stats || []).forEach((s) => {
-    const tile = el("div", "stat");
-    tile.appendChild(el("div", "label", s.label));
-    tile.appendChild(el("div", "value", s.value));
-    $("stats").appendChild(tile);
-  });
-
-  // ---------- 核心观点 ----------
-  const vps = D.viewpoints || [];
-  $("vpCount").textContent = vps.length ? `${vps.length} 条` : "";
-  vps.forEach((v, i) => {
-    const card = el("div", "vp");
-    const head = el("div", "vp-head");
-    head.appendChild(el("div", "vp-num", String(i + 1)));
-    const tt = el("div", "vp-title"); biInto(tt, v.title); head.appendChild(tt);
-    card.appendChild(head);
-    const detail = el("div", "vp-detail"); biInto(detail, v.detail); card.appendChild(detail);
-    if (v.quote) {
-      const qb = el("div", "quote-box");
-      const q = el("div", "q");
-      q.appendChild(document.createTextNode("“" + v.quote + "”"));
-      if (v.quote_zh) q.appendChild(el("span", "zh-sub", v.quote_zh));
-      qb.appendChild(q);
-      qb.appendChild(tchip(v.t || 0));
-      card.appendChild(qb);
-    }
-    $("viewpoints").appendChild(card);
-  });
-  if (!vps.length) $("sec-viewpoints").style.display = "none";
-
-  // ---------- 章节时间轴 ----------
-  const chs = D.chapters || [];
-  $("chCount").textContent = chs.length ? `${chs.length} 章` : "";
-  chs.forEach((c) => {
-    const item = el("div", "ch");
-    const head = el("div", "ch-head");
-    head.appendChild(tchip(c.t_start));
-    head.appendChild(el("span", "ch-range", `${mmss(c.t_start)} – ${mmss(c.t_end)}`));
-    const tt = el("span", "ch-title"); biInto(tt, c.title); head.appendChild(tt);
-    item.appendChild(head);
-    const sum = el("div", "ch-sum"); biInto(sum, c.summary); item.appendChild(sum);
-    $("chapters").appendChild(item);
-  });
-  if (!chs.length) $("sec-chapters").style.display = "none";
-
-  // ---------- 金句 ----------
-  const qs = D.quotes || [];
-  qs.forEach((q) => {
-    const g = el("div", "gq");
-    g.appendChild(el("div", "mark", "❝"));
-    const body = el("div", "q");
-    body.appendChild(document.createTextNode(q.text));
-    if (q.text_zh) body.appendChild(el("span", "zh-sub", q.text_zh));
-    g.appendChild(body);
-    g.appendChild(tchip(q.t || 0));
-    $("quotes").appendChild(g);
-  });
-  if (!qs.length) $("sec-quotes").style.display = "none";
-
-  // ---------- 完整转写 ----------
-  const tr = D.transcript || [];
-  $("trCount").textContent = tr.length ? `${tr.length} 行` : "";
-  const trBox = $("transcript");
-  const rowEls = tr.map((l) => {
-    const row = el("div", "row");
-    const t = el("span", "t", mmss(l.t0));
-    t.addEventListener("click", () => seek(l.t0));
-    row.appendChild(t);
-    const tx = el("span", "tx");
-    tx.appendChild(document.createTextNode(l.text));
-    if (l.zh) tx.appendChild(el("span", "zh-sub", l.zh));
-    row.appendChild(tx);
-    trBox.appendChild(row);
-    return row;
-  });
-  if (!tr.length) $("sec-transcript").style.display = "none";
-
-  // ---------- 播放联动：高亮当前行 + 当前章节 ----------
-  let activeIdx = -1;
-  function chapterAt(t) {
-    for (let i = chs.length - 1; i >= 0; i--) if (t >= chs[i].t_start) return chs[i];
-    return null;
+  /* ---------- 页头 ---------- */
+  document.title = (M.short_title || M.title || '视频分析报告') + ' · 视频分析报告';
+  document.getElementById('h-title').textContent = M.short_title || M.title || '视频分析报告';
+  if(M.title && M.title !== M.short_title) document.getElementById('h-sub').textContent = M.title;
+  var meta = document.getElementById('h-meta');
+  function pill(label, value){
+    if(!value) return;
+    var p = el('span', 'pill', label + ' ');
+    p.appendChild(el('b', null, value));
+    meta.appendChild(p);
   }
-  audio.addEventListener("timeupdate", () => {
-    const t = audio.currentTime;
-    // 当前章节
-    const ch = chapterAt(t);
-    if (ch) {
-      const name = ch.title.en || ch.title.zh || "";
-      $("now").innerHTML = "";
-      $("now").appendChild(document.createTextNode("正在播放：" + mmss(t) + " · "));
-      $("now").appendChild(el("b", null, name));
+  pill('▶ 平台', M.platform);
+  pill('👤 UP主', M.uploader);
+  pill('⏱ 时长', mmss(M.duration));
+  pill('📅 发布', M.upload_date);
+  pill('📝 字幕', M.source_label);
+  pill('🌐 语言', isZh ? '中文' : (M.lang || '') + ' · 中英双语');
+
+  /* ---------- 章节区间 → 找某个时间点属于哪一章 ---------- */
+  var chapters = D.chapters || [];
+  function chapterAt(t){
+    var hit = null;
+    for(var i=0;i<chapters.length;i++){
+      if(t >= chapters[i].t_start - 0.5) hit = chapters[i]; else break;
     }
-    // 当前转写行（转写有序，线性推进即可）
-    let idx = activeIdx;
-    if (idx < 0 || t < (tr[idx] ? tr[idx].t0 : 0)) idx = 0;
-    while (idx + 1 < tr.length && tr[idx + 1].t0 <= t) idx++;
-    if (idx !== activeIdx && tr[idx]) {
-      if (rowEls[activeIdx]) rowEls[activeIdx].classList.remove("active");
-      rowEls[idx].classList.add("active");
-      activeIdx = idx;
-      if ($("follow").checked)
-        rowEls[idx].scrollIntoView({ block: "center", behavior: "smooth" });
+    return hit;
+  }
+
+  /* ---------- 章节结构 ---------- */
+  var main = document.getElementById('main');
+  var toc  = document.getElementById('toc');
+  var idx  = 0;
+  function section(id, title, count){
+    var s = el('section');
+    s.id = id;
+    var h = el('h2');
+    var n = (idx < 10 ? '0' : '') + idx;
+    h.appendChild(el('span', 'idx', n));
+    h.appendChild(el('span', null, title));
+    s.appendChild(h);
+    main.appendChild(s);
+
+    var a = el('a');
+    a.href = '#' + id;
+    a.appendChild(el('span', 'n', n));
+    a.appendChild(el('span', null, title));
+    if(count) a.appendChild(el('span', 'score', count));
+    toc.appendChild(a);
+
+    idx++;
+    return s;
+  }
+  function lead(s, text){ s.appendChild(el('p', 'lead', text)); return s; }
+
+  /* ---------- 00 总览 ---------- */
+  if(D.overview && (D.overview.zh || D.overview.en)){
+    var s0 = section('overview', '总览与结论');
+    var c = el('div', 'callout');
+    biInto(c, D.overview);
+    s0.appendChild(c);
+    if((D.topics || []).length){
+      var tw = el('div', 'topics');
+      D.topics.forEach(function(t){ tw.appendChild(el('span', 'topic', '# ' + t)); });
+      s0.appendChild(tw);
     }
+    if((D.stats || []).length){
+      var st = el('div', 'stats');
+      D.stats.forEach(function(x){
+        var w = el('div', 'stat');
+        w.appendChild(el('div', 'num', x.value));
+        w.appendChild(el('div', 'cap', x.label));
+        st.appendChild(w);
+      });
+      s0.appendChild(st);
+    }
+  }
+
+  /* ---------- 01 核心观点 ---------- */
+  if((D.viewpoints || []).length){
+    var s1 = section('viewpoints', '核心观点', D.viewpoints.length + ' 条');
+    lead(s1, '每条观点都配了逐字原话与时间点，点 ▶ 直接跳到原片那一刻。');
+    D.viewpoints.forEach(function(v, i){
+      var card = el('div', 'card vp');
+      var head = el('div', 'vphead');
+      head.appendChild(el('span', 'n', (i+1 < 10 ? '0' : '') + (i+1)));
+      var t = el('div', 't');
+      biInto(t, v.title);
+      head.appendChild(t);
+      head.appendChild(pb(v.t));
+      card.appendChild(head);
+      var body = el('div', 'vpbody');
+      biInto(body, v.detail);
+      card.appendChild(body);
+      if(v.quote){
+        var q = el('div', 'quote');
+        var qh = el('div', 'qhead');
+        qh.appendChild(el('span', 'k', '原话'));
+        qh.appendChild(pb(v.t));
+        q.appendChild(qh);
+        q.appendChild(el('div', isZh ? null : 'en', '「' + v.quote + '」'));
+        if(v.quote_zh) q.appendChild(el('div', 'zh', v.quote_zh));
+        card.appendChild(q);
+      }
+      s1.appendChild(card);
+    });
+  }
+
+  /* ---------- 02 章节时间轴 ---------- */
+  if(chapters.length){
+    var s2 = section('timeline', '章节时间轴', chapters.length + ' 章');
+    lead(s2, '全片结构速览。点任意时间跳转播放。');
+    var card2 = el('div', 'card');
+    var tl = el('div', 'tl');
+    chapters.forEach(function(ch){
+      var ev = el('div', 'ev');
+      var h = el('div', 'h');
+      h.appendChild(pb(ch.t_start));
+      var ti = el('span');
+      var title = (ch.title || {});
+      ti.textContent = title.en || title.zh || '';
+      h.appendChild(ti);
+      h.appendChild(el('span', 'rng', mmss(ch.t_start) + ' – ' + mmss(ch.t_end)));
+      ev.appendChild(h);
+      if(title.en && title.zh) ev.appendChild(el('div', 'zh', title.zh));
+      tl.appendChild(ev);
+    });
+    card2.appendChild(tl);
+    s2.appendChild(card2);
+  }
+
+  /* ---------- 03 逐段精读 ---------- */
+  if(chapters.length){
+    var s3 = section('segments', '逐段精读', chapters.length + ' 段');
+    lead(s3, '对着音频看：左侧时间戳可直接播放，右侧是这一段讲了什么、落在这一段的原话。');
+    var card3 = el('div', 'card');
+    chapters.forEach(function(ch){
+      var seg = el('div', 'seg');
+      var left = el('div', 'seg-t');
+      left.appendChild(pb(ch.t_start));
+      left.appendChild(el('span', 'rng', mmss(ch.t_start) + ' – ' + mmss(ch.t_end)));
+      seg.appendChild(left);
+
+      var right = el('div');
+      var title = ch.title || {};
+      var tp = el('div', 'seg-topic', title.en || title.zh || '');
+      right.appendChild(tp);
+      if(title.en && title.zh) right.appendChild(el('div', 'zh', title.zh));
+
+      var row = el('div', 'seg-row');
+      row.appendChild(el('span', 'k', '讲了什么：'));
+      var sm = ch.summary || {};
+      var body = el('span');
+      if(sm.en){
+        body.appendChild(el('span', 'en', sm.en));
+        if(sm.zh) body.appendChild(el('div', 'zh', sm.zh));
+      } else if(sm.zh){
+        body.appendChild(el('span', null, sm.zh));
+      }
+      row.appendChild(body);
+      right.appendChild(row);
+
+      /* 落在本段区间内的观点原话 */
+      (D.viewpoints || []).forEach(function(v){
+        if(!v.quote || v.t < ch.t_start || v.t >= ch.t_end) return;
+        var q = el('div', 'seg-row q');
+        q.appendChild(el('span', 'k', '原话：'));
+        var sp = el('span', isZh ? null : 'en', '「' + v.quote + '」 ');
+        q.appendChild(sp);
+        q.appendChild(pb(v.t));
+        if(v.quote_zh) q.appendChild(el('div', 'zh', v.quote_zh));
+        right.appendChild(q);
+      });
+
+      seg.appendChild(right);
+      card3.appendChild(seg);
+    });
+    s3.appendChild(card3);
+  }
+
+  /* ---------- 04 金句 ---------- */
+  if((D.quotes || []).length){
+    var s4 = section('quotes', '金句', D.quotes.length + ' 句');
+    D.quotes.forEach(function(q){
+      var g = el('div', 'gq');
+      g.appendChild(el('div', 'big' + (isZh ? '' : ' en'), '“' + q.text + '”'));
+      if(q.text_zh) g.appendChild(el('div', 'zh', q.text_zh));
+      var f = el('div', 'foot');
+      f.appendChild(pb(q.t));
+      g.appendChild(f);
+      s4.appendChild(g);
+    });
+  }
+
+  /* ---------- 05 完整转写 ---------- */
+  var rows = [];
+  var lines = D.transcript || [];
+  if(lines.length){
+    var s5 = section('transcript', '完整转写', lines.length + ' 行');
+    var bar = el('div', 'tsbar');
+    var lab = el('label');
+    var cb = el('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.id = 'follow';
+    lab.appendChild(cb);
+    lab.appendChild(el('span', null, ' 跟随播放自动滚动'));
+    bar.appendChild(lab);
+    bar.appendChild(el('span', 'lead', isZh ? '点时间戳跳转播放。' : '原文在上、中文译文在下；点时间戳跳转播放。'));
+    s5.appendChild(bar);
+
+    var wrap = el('div', 'tswrap');
+    lines.forEach(function(l){
+      var r = el('div', 'row');
+      var tm = el('div', 'tm', mmss(l.t0));
+      tm.setAttribute('data-t', l.t0);
+      r.appendChild(tm);
+      var tx = el('div', 'tx');
+      tx.appendChild(el('div', isZh ? null : 'en', l.text));
+      if(l.zh) tx.appendChild(el('div', 'zh', l.zh));
+      r.appendChild(tx);
+      wrap.appendChild(r);
+      rows.push(r);
+    });
+    s5.appendChild(wrap);
+  }
+
+  /* ---------- footer ---------- */
+  var foot = document.getElementById('foot');
+  var f1 = el('div', null, '由 video-to-doc-agent 生成' + (M.generated_at ? ' · ' + M.generated_at : '') + ' · ');
+  if(M.url){
+    var a = el('a', null, M.url);
+    a.href = M.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    f1.appendChild(el('span', null, '原视频：'));
+    f1.appendChild(a);
+  }
+  foot.appendChild(f1);
+  foot.appendChild(el('div', null,
+    '观点与章节由模型基于' + (M.source_label || '转写文本') + '归纳，时间戳取自转写行，可能有少量偏移；引用请以原片为准。'));
+
+  /* ---------- 目录高亮 ---------- */
+  (function(){
+    var links = [].slice.call(document.querySelectorAll('.toc a'));
+    var pairs = links.map(function(a){
+      var s = document.querySelector(a.getAttribute('href'));
+      return s ? [s, a] : null;
+    }).filter(Boolean);
+    if(!('IntersectionObserver' in window) || !pairs.length) return;
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(!e.isIntersecting) return;
+        links.forEach(function(l){ l.classList.remove('active'); });
+        for(var i=0;i<pairs.length;i++){
+          if(pairs[i][0] === e.target){ pairs[i][1].classList.add('active'); break; }
+        }
+      });
+    }, {rootMargin:'-8% 0px -78% 0px'});
+    pairs.forEach(function(p){ io.observe(p[0]); });
+  })();
+
+  /* ---------- 播放器 ---------- */
+  var au = document.getElementById('au');
+  var barEl = document.getElementById('playerbar');
+  var capbar = document.getElementById('capbar');
+  if(!hasAudio){
+    barEl.style.display = 'none';
+    capbar.style.display = 'none';
+    return;
+  }
+  au.src = D.audio;
+  document.getElementById('pt-name').textContent = (M.short_title || D.audio) + ' · ' + D.audio;
+
+  /* 点任意 ▶ / 时间戳 → 跳转播放 */
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('.pb, .row .tm');
+    if(!b) return;
+    var t = parseFloat(b.getAttribute('data-t'));
+    if(isNaN(t)) return;
+    au.currentTime = t;
+    au.play();
+    var old = document.querySelectorAll('.pb.playing');
+    for(var i=0;i<old.length;i++) old[i].classList.remove('playing');
+    if(b.classList.contains('pb')) b.classList.add('playing');
   });
 
-  // ---------- footer ----------
-  const f = $("footer");
-  f.appendChild(document.createTextNode("由 video-to-doc-agent 生成"
-    + (M.generated_at ? " · " + M.generated_at : "") + " · 原视频："));
-  const a = el("a", null, M.url || "-");
-  a.href = M.url || "#"; a.target = "_blank"; a.rel = "noopener";
-  f.appendChild(a);
+  /* 实时字幕 + 转写高亮跟随 */
+  var cap = document.getElementById('cap');
+  var ccb = document.getElementById('cc');
+  var on = true, lastCue = -1, lastRow = -1;
+  try{ if(localStorage.getItem('v2d-cc') === '0') on = false; }catch(e){}
+
+  function findLine(t){
+    /* 先看上一次命中的附近，miss 再二分 */
+    if(lastCue >= 0 && lines[lastCue] && t >= lines[lastCue].t0 && t < lines[lastCue].t1) return lastCue;
+    var lo = 0, hi = lines.length - 1, ans = -1;
+    while(lo <= hi){
+      var m = (lo + hi) >> 1;
+      if(t < lines[m].t0) hi = m - 1;
+      else { ans = m; lo = m + 1; }
+    }
+    return ans;
+  }
+  function paintCap(i){
+    cap.textContent = '';
+    if(!on || i < 0) return;
+    var l = lines[i];
+    var head = el('span', 'cts', mmss(l.t0));
+    cap.appendChild(head);
+    cap.appendChild(document.createTextNode(l.text));
+    if(l.zh) cap.appendChild(el('div', 'zh', l.zh));
+  }
+  function tick(){
+    var i = findLine(au.currentTime);
+    if(i === lastCue) return;
+    lastCue = i;
+    paintCap(i);
+    if(i !== lastRow && rows[i]){
+      if(rows[lastRow]) rows[lastRow].classList.remove('active');
+      rows[i].classList.add('active');
+      lastRow = i;
+      var f = document.getElementById('follow');
+      if(f && f.checked) rows[i].scrollIntoView({block:'nearest', behavior:'smooth'});
+    }
+  }
+  function applyCC(){
+    capbar.classList.toggle('on', on);
+    ccb.setAttribute('aria-pressed', on ? 'true' : 'false');
+    ccb.querySelector('.lbl').textContent = on ? '字幕 开' : '字幕 关';
+    if(!on) cap.textContent = ''; else paintCap(lastCue);
+    try{ localStorage.setItem('v2d-cc', on ? '1' : '0'); }catch(e){}
+  }
+  ccb.addEventListener('click', function(){ on = !on; applyCC(); });
+  au.addEventListener('timeupdate', tick);
+  au.addEventListener('seeked', function(){ lastCue = -1; tick(); });
+  applyCC();
 })();
 </script>
 </body>
