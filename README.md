@@ -71,11 +71,31 @@ output/<短标题>/
 `report.html` 无外部依赖，配上同目录的 `audio.mp3` 可以整目录拷走分发；
 单发 HTML 也能打开，只是播放器会隐藏、时间戳降级为纯展示。
 
-## 报告模板即 skill
+## 报告部分是一个独立 skill
 
-报告的 HTML 模板沉淀在 `.claude/skills/video-analysis-report/`——
-数据契约、注入方式、设计约定见其中的 `SKILL.md`。想改样式或在别的项目
-复用这套“带播放器的访谈分析报告”，直接拿这个 skill。
+```
+skills/video-debrief/
+├── SKILL.md                      # 触发条件、输入、工作流、硬规则
+├── assets/report_template.html   # 单文件报告模板
+├── references/
+│   ├── data-contract.md          # REPORT_DATA 每个字段
+│   └── design.md                 # 版式/配色/交互约定，改样式前读
+└── scripts/
+    ├── render_report.py          # data.json + 模板 → 单文件 HTML（纯标准库）
+    └── srt_to_transcript.py      # SRT(+中文SRT) → transcript 数组
+```
+
+这个目录**可以整个拿走单独用**，不依赖 `v2d/`：
+
+```bash
+python3 skills/video-debrief/scripts/srt_to_transcript.py a.srt --zh a.zh.srt > t.json
+# 自己拼好 data.json 后
+python3 skills/video-debrief/scripts/render_report.py data.json report.html
+```
+
+`v2d/report.py` 也是直接调它的 `render()`，所以两条路径产出的 HTML 完全一致。
+装成 Claude Code plugin 见 `.claude-plugin/plugin.json`；给别的 AI 编码工具用
+见 `AGENTS.md`。
 
 视觉语言脱胎于 [InterviewAnalysis](https://github.com/GabrielPower1969/InterviewAnalysis)
 的 `interview-analysis` skill（MIT），按视频分析的内容模型重做了信息架构。

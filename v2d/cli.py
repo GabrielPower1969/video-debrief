@@ -241,6 +241,8 @@ def demo(output_root: str = "output") -> Path:
         ],
         "transcript": [{"t0": a, "t1": b, "text": t, "zh": z} for a, b, t, z in tr],
     }
+    (out_dir / "data.json").write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                                       encoding="utf-8")
     report.render(data, out_dir / "report.html")
     print(f"[v2d] demo 报告 → {out_dir / 'report.html'}")
     return out_dir

@@ -1,22 +1,29 @@
 """报告渲染：数据 dict → 单文件 report.html。
 
-模板是本仓库的 skill（.claude/skills/video-analysis-report/template.html），
-渲染只做一次占位符替换，数据契约见该 skill 的 SKILL.md。
+渲染逻辑本身住在 skill 里（skills/video-debrief/scripts/render_report.py），
+这里只是把它接进流水线——这样 skill 目录单独拿走也是完整可用的，不会退化成
+「必须配合 v2d 才能跑」的半成品。数据契约见
+skills/video-debrief/references/data-contract.md。
 """
 from __future__ import annotations
 
-import json
+import importlib.util
 from pathlib import Path
 
-TEMPLATE = Path(__file__).resolve().parents[1] / ".claude" / "skills" / "video-analysis-report" / "template.html"
+SKILL = Path(__file__).resolve().parents[1] / "skills" / "video-debrief"
+TEMPLATE = SKILL / "assets" / "report_template.html"
+_RENDERER = SKILL / "scripts" / "render_report.py"
 
 
-def render(data: dict, out_path: Path) -> Path:
-    html = TEMPLATE.read_text(encoding="utf-8")
-    # 防止 JSON 里的 "</script>" 提前闭合 script 标签
-    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
-    marker = "/*__REPORT_DATA__*/null"
-    if marker not in html:
-        raise RuntimeError(f"模板缺少注入占位符：{TEMPLATE}")
-    out_path.write_text(html.replace(marker, payload), encoding="utf-8")
-    return out_path
+def _load():
+    spec = importlib.util.spec_from_file_location("v2d_render_report", _RENDERER)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def render(data: dict, out_path: Path, *, progress=print) -> Path:
+    mod = _load()
+    for w in mod.check(data):
+        progress(f"[v2d] ⚠ {w}")
+    return mod.render(data, out_path, TEMPLATE)

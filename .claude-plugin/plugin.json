@@ -1,0 +1,6 @@
+{
+  "name": "video-debrief",
+  "description": "把视频/播客/访谈转写成一份自带播放器的 HTML 复盘报告：核心观点、章节时间轴、逐段精读、金句、逐行转写，每个时间点都是 ▶ 按钮，点了跳回原片；原文非中文时出中英双语。",
+  "author": { "name": "Gabriel Chen" },
+  "homepage": "https://github.com/GabrielPower1969/video-to-doc-agent"
+}
