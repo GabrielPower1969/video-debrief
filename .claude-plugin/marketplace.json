@@ -1,0 +1,24 @@
+{
+  "name": "gabriel-tools",
+  "description": "Gabriel 的视频/音频转 HTML 复盘报告工具集。",
+  "owner": {
+    "name": "Gabriel Chen",
+    "url": "https://github.com/GabrielPower1969"
+  },
+  "plugins": [
+    {
+      "name": "video-debrief",
+      "source": "./",
+      "displayName": "Video Debrief",
+      "description": "把视频/播客/访谈转写成一份自带播放器的 HTML 复盘报告：核心观点、章节时间轴、逐段精读、金句、逐行转写，每个时间点都是 ▶ 按钮，点了跳回原片；原文非中文时出中英双语。",
+      "version": "0.1.0",
+      "author": { "name": "Gabriel Chen" },
+      "homepage": "https://github.com/GabrielPower1969/video-debrief",
+      "repository": "https://github.com/GabrielPower1969/video-debrief",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": ["video", "podcast", "transcript", "summary", "report", "srt", "whisper", "bilibili", "youtube"],
+      "tags": ["video", "summarization", "transcript", "html-report"]
+    }
+  ]
+}
